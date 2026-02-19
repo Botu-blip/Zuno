@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>AI Wardrobe Stylist — ZUNO</title>
+    {% load static %}
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── TOP BAR ── */
+        .top-bar {
+            background: #2e7d32;
+            color: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .top-bar h1 { font-size: 22px; }
+        .top-bar nav { display: flex; gap: 12px; }
+        .top-bar a {
+            background: white;
+            color: #2e7d32;
+            padding: 7px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .top-bar a:hover { background: #e8f5e9; }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(135deg, #2e7d32 0%, #43a047 60%, #66bb6a 100%);
+            padding: 28px 20px 48px;
+            text-align: center;
+            color: white;
+        }
+        .hero h2 { font-size: 26px; margin-bottom: 8px; }
+        .hero p  { font-size: 14px; opacity: 0.88; }
+
+        /* ── MAIN ── */
+        .main {
+            flex: 1;
+            max-width: 1000px;
+            margin: -28px auto 40px;
+            padding: 0 20px;
+            width: 100%;
+        }
+
+        /* ── UPLOAD CARD ── */
+        .upload-card {
+            background: white;
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+        .upload-card h3 { color: #2e7d32; margin-bottom: 16px; font-size: 17px; }
+
+        .upload-zone {
+            border: 2.5px dashed #a5d6a7;
+            border-radius: 10px;
+            padding: 30px 20px;
+            text-align: center;
+            background: #f9fdf9;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 16px;
+        }
+        .upload-zone:hover { border-color: #4CAF50; background: #f1f8f1; }
+        .upload-zone .upload-icon { font-size: 40px; margin-bottom: 10px; }
+        .upload-zone p  { color: #888; font-size: 14px; }
+        .upload-zone input[type=file] { display: none; }
+
+        .preview-img {
+            max-width: 200px;
+            max-height: 160px;
+            border-radius: 8px;
+            margin: 10px auto 0;
+            display: none;
+            border: 2px solid #c8e6c9;
+        }
+
+        .btn-green {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-green:hover  { background: #388e3c; }
+        .btn-green:active { transform: scale(0.98); }
+        .btn-green:disabled { background: #aaa; cursor: not-allowed; }
+
+        /* ── RESULT GRID ── */
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        @media(max-width: 700px) { .result-grid { grid-template-columns: 1fr; } }
+
+        .result-card {
+            background: white;
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+        }
+        .result-card h3 { color: #2e7d32; margin-bottom: 14px; font-size: 16px; }
+
+        .wardrobe-img {
+            width: 100%;
+            border-radius: 10px;
+            object-fit: cover;
+            max-height: 320px;
+            border: 2px solid #e8f5e9;
+        }
+
+        /* Outfit suggestion styling */
+        .suggestion-text {
+            background: #f9fdf9;
+            border-left: 4px solid #4CAF50;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.9;
+            white-space: pre-line;
+            color: #333;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        /* ── CHATBOT ── */
+        .chat-card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+        }
+        .chat-card h3    { color: #2e7d32; margin-bottom: 4px; font-size: 16px; }
+        .chat-subtitle   { color: #888; font-size: 13px; margin-bottom: 14px; }
+
+        /* Quick action pills */
+        .quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .quick-btn {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1.5px solid #a5d6a7;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 12.5px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .quick-btn:hover { background: #c8e6c9; }
+
+        /* Chat window */
+        .chat-window {
+            height: 300px;
+            overflow-y: auto;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #fafafa;
+            scroll-behavior: smooth;
+        }
+
+        .chat-bubble {
+            max-width: 82%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 13.5px;
+            line-height: 1.65;
+            white-space: pre-line;
+        }
+        .chat-bubble.user {
+            background: #4CAF50;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bubble.assistant {
+            background: #e8f5e9;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .chat-bubble.thinking {
+            background: #f5f5f5;
+            color: #aaa;
+            align-self: flex-start;
+            font-style: italic;
+        }
+        .chat-label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 3px;
+            opacity: 0.7;
+        }
+
+        /* Input row */
+        .chat-input-row { display: flex; gap: 10px; }
+        .chat-input-row input {
+            flex: 1;
+            padding: 11px 16px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .chat-input-row input:focus { border-color: #4CAF50; }
+        .btn-send {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 22px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .btn-send:hover    { background: #388e3c; }
+        .btn-send:disabled { background: #aaa; cursor: not-allowed; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #aaa;
+        }
+        .empty-state .empty-icon { font-size: 60px; margin-bottom: 14px; }
+        .empty-state p { font-size: 15px; }
+
+        /* ── LOADING SPINNER ── */
+        .spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        footer {
+            text-align: center;
+            padding: 18px;
+            font-size: 12px;
+            color: #bbb;
+        }
+
+        @media(max-width: 600px) {
+            .top-bar h1 { font-size: 17px; }
+            .hero h2    { font-size: 20px; }
+            .chat-card, .upload-card { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<div class="top-bar">
+    <h1>👗 AI Wardrobe Stylist</h1>
+    <nav>
+        <a href="{% url 'index' %}">🏠 Home</a>
+        <a href="{% url 'mealplan' %}">🍳 Meal Plan</a>
+        <a href="{% url 'chatbot' %}">💬 Chatbot</a>
+    </nav>
+</div>
+
+<!-- ── HERO ── -->
+<div class="hero">
+    <h2>✨ Let AI Style You Today</h2>
+    <p>Upload your wardrobe photo — AI will suggest the perfect outfit & help you customize it!</p>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+    <!-- UPLOAD CARD -->
+    <div class="upload-card">
+        <h3>📸 Upload Your Wardrobe Photo</h3>
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
+
+            <div class="upload-zone" onclick="document.getElementById('wardrobeInput').click()">
+                <div class="upload-icon">🗄️</div>
+                <p>Click to select your wardrobe image</p>
+                <p style="font-size:12px; margin-top:4px;">JPG, PNG supported</p>
+                <input type="file" id="wardrobeInput" name="wardrobe_image"
+                       accept="image/*" required onchange="previewImage(event)">
+                <img id="previewImg" class="preview-img" alt="Preview">
+            </div>
+
+            <button type="submit" class="btn-green" id="submitBtn">
+                ✨ Get Outfit Suggestion
+            </button>
+        </form>
+    </div>
+
+    {% if session %}
+
+    <!-- RESULT GRID -->
+    <div class="result-grid">
+
+        <!-- Wardrobe Image -->
+        <div class="result-card">
+            <h3>🗄️ Your Wardrobe</h3>
+            <img src="{{ session.image.url }}" alt="Your Wardrobe" class="wardrobe-img">
+        </div>
+
+        <!-- AI Suggestion -->
+        <div class="result-card">
+            <h3>✨ Today's Outfit Suggestion</h3>
+            <div class="suggestion-text">{{ session.ai_suggestion }}</div>
+        </div>
+
+    </div>
+
+    <!-- CHATBOT -->
+    <div class="chat-card">
+        <h3>💬 Not Happy? Ask AI to Change It!</h3>
+        <p class="chat-subtitle">Tell the AI what you want to change — it will pick alternatives from your wardrobe.</p>
+
+        <!-- Quick action pills -->
+        <div class="quick-actions">
+            <button class="quick-btn" onclick="quickSend('Change the top please')">🔄 Change Top</button>
+            <button class="quick-btn" onclick="quickSend('Change the bottom please')">🔄 Change Bottom</button>
+            <button class="quick-btn" onclick="quickSend('Suggest something more formal')">👔 More Formal</button>
+            <button class="quick-btn" onclick="quickSend('Suggest something more casual')">👕 More Casual</button>
+            <button class="quick-btn" onclick="quickSend('Suggest a different color combination')">🎨 Different Colors</button>
+            <button class="quick-btn" onclick="quickSend('What shoes go best with this outfit?')">👟 Best Shoes</button>
+        </div>
+
+        <!-- Chat Window -->
+        <div class="chat-window" id="chatWindow">
+            <!-- First AI message -->
+            <div class="chat-bubble assistant">
+                <div class="chat-label">🤖 AI Stylist</div>
+                {{ session.ai_suggestion }}
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="chat-input-row">
+            <input type="text" id="chatInput"
+                   placeholder="e.g. 'I don't like the top, suggest another'..."
+                   onkeydown="if(event.key==='Enter') sendMessage()">
+            <button class="btn-send" id="sendBtn" onclick="sendMessage()">Send ➤</button>
+        </div>
+    </div>
+
+    {% else %}
+
+    <!-- EMPTY STATE — no session yet -->
+    <div class="empty-state">
+        <div class="empty-icon">👗</div>
+        <p>Upload your wardrobe photo above to get your AI outfit suggestion!</p>
+    </div>
+
+    {% endif %}
+
+</div>
+
+<footer>© 2026 ZUNO · AI Wardrobe Stylist · Powered by Groq AI</footer>
+
+<script>
+    const SESSION_ID = {% if session %}{{ session.id }}{% else %}null{% endif %};
+
+    /* ── IMAGE PREVIEW ── */
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const img = document.getElementById('previewImg');
+        img.src = URL.createObjectURL(file);
+        img.style.display = 'block';
+        document.querySelector('.upload-zone p').textContent = file.name;
+    }
+
+    /* ── SUBMIT LOADING STATE ── */
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Analyzing wardrobe...';
+    });
+
+    /* ── QUICK SEND ── */
+    function quickSend(text) {
+        document.getElementById('chatInput').value = text;
+        sendMessage();
+    }
+
+    /* ── SEND MESSAGE ── */
+    function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const btn   = document.getElementById('sendBtn');
+        const msg   = input.value.trim();
+
+        if (!msg || !SESSION_ID) return;
+
+        appendBubble('user', msg);
+        input.value  = '';
+        btn.disabled = true;
+        btn.textContent = '⏳';
+
+        const thinkingId = 'thinking-' + Date.now();
+        appendBubble('thinking', '✨ AI is styling...', thinkingId);
+
+        fetch("{% url 'wardrobe_chat' %}", {
+            method  : 'POST',
+            headers : {
+                'Content-Type' : 'application/json',
+                'X-CSRFToken'  : getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ session_id: SESSION_ID, message: msg }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            removeBubble(thinkingId);
+            if (data.error) {
+                appendBubble('assistant', '❌ Error: ' + data.error);
+            } else {
+                appendBubble('assistant', data.reply);
+            }
+        })
+        .catch(() => {
+            removeBubble(thinkingId);
+            appendBubble('assistant', '❌ Something went wrong. Please try again!');
+        })
+        .finally(() => {
+            btn.disabled    = false;
+            btn.textContent = 'Send ➤';
+        });
+    }
+
+    /* ── APPEND BUBBLE ── */
+    function appendBubble(role, text, id = null) {
+        const win = document.getElementById('chatWindow');
+        const div = document.createElement('div');
+        div.className = 'chat-bubble ' + role;
+        if (id) div.id = id;
+
+        if (role === 'assistant') {
+            div.innerHTML = '<div class="chat-label">🤖 AI Stylist</div>' +
+                            text.replace(/\n/g, '<br>');
+        } else if (role === 'user') {
+            div.innerHTML = '<div class="chat-label">👤 You</div>' + text;
+        } else {
+            div.textContent = text;
+        }
+
+        win.appendChild(div);
+        win.scrollTop = win.scrollHeight;
+    }
+
+    /* ── REMOVE BUBBLE ── */
+    function removeBubble(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    }
+
+    /* ── CSRF COOKIE ── */
+    function getCookie(name) {
+        const val = document.cookie.split('; ').find(r => r.startsWith(name + '='));
+        return val ? val.split('=')[1] : '';
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Weekly Meal Planner</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f4f0; min-height: 100vh; }
+
+        .top-bar {
+            background: #2e7d32;
+            color: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .top-bar h1 { font-size: 22px; }
+        .top-bar a {
+            background: white;
+            color: #2e7d32;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .main { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+
+        .upload-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        .upload-card label { font-weight: bold; color: #555; display: block; margin-bottom: 12px; }
+        .upload-card input[type=file] { margin-bottom: 14px; width: 100%; }
+        .btn-green {
+            background: #4CAF50; color: white; padding: 10px 24px;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 15px;
+        }
+        .btn-green:hover { background: #388e3c; }
+        .error { color: red; margin-top: 12px; font-weight: bold; }
+
+        .ingredients-box {
+            background: #fff8e1;
+            border-left: 4px solid #ffa000;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+        }
+        .ingredients-box h3 { margin-bottom: 8px; color: #e65100; }
+
+        .today-card {
+            background: #e8f5e9;
+            border-left: 5px solid #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .today-card h2 { color: #2e7d32; margin-bottom: 14px; }
+        .today-card p { margin-bottom: 8px; font-size: 15px; }
+
+        .week-section h2 {
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #4CAF50;
+        }
+
+        .day-card {
+            background: white;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .day-card h3 { color: #4CAF50; margin-bottom: 12px; font-size: 15px; }
+        .meal-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .meal-item {
+            flex: 1; min-width: 200px;
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .meal-label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        .meal-name { font-size: 14px; color: #333; margin-bottom: 8px; }
+        .btn-recipe {
+            background: #4CAF50; color: white;
+            border: none; border-radius: 4px;
+            padding: 5px 10px; font-size: 12px; cursor: pointer;
+        }
+        .btn-recipe:hover { background: #388e3c; }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center; align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: 12px;
+            width: 90%; max-width: 620px; max-height: 85vh;
+            overflow-y: auto; padding: 28px;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 14px; right: 18px;
+            background: none; border: none; font-size: 22px;
+            cursor: pointer; color: #666;
+        }
+        .modal h2 { color: #2e7d32; margin-bottom: 16px; }
+        .modal-loading { text-align: center; padding: 30px; color: #888; }
+
+        .ingredient-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 6px;
+            background: #f5f5f5;
+        }
+        .ing-info { font-size: 14px; }
+        .ing-name { font-weight: bold; }
+        .ing-qty { color: #777; font-size: 12px; }
+        .btn-sub {
+            background: #ff7043; color: white;
+            border: none; border-radius: 4px;
+            padding: 4px 10px; font-size: 12px; cursor: pointer;
+        }
+        .btn-sub:hover { background: #e64a19; }
+        .btn-change-dish {
+            display: block; width: 100%;
+            background: #1565c0; color: white;
+            border: none; border-radius: 6px;
+            padding: 10px; font-size: 14px; cursor: pointer;
+            margin-top: 16px;
+        }
+        .btn-change-dish:hover { background: #0d47a1; }
+
+        .steps-box {
+            background: #f9f9f9; border-radius: 8px;
+            padding: 14px; margin-top: 16px;
+            white-space: pre-line; font-size: 14px; line-height: 1.7;
+        }
+        .substitute-result {
+            background: #e3f2fd; border-radius: 6px;
+            padding: 10px 14px; margin-top: 8px;
+            font-size: 13px; color: #1565c0;
+        }
+
+        .chatbot-fab {
+            position: fixed; bottom: 28px; right: 28px;
+            background: #4CAF50; color: white;
+            width: 56px; height: 56px;
+            border-radius: 50%; border: none;
+            font-size: 26px; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-decoration: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .chatbot-fab:hover { background: #388e3c; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h1>🍳 AI Weekly Meal Planner</h1>
+    <a href="/chatbot/">💬 Open Chatbot</a>
+</div>
+
+<div class="main">
+
+    <div class="upload-card">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label>📷 Select fridge image:</label>
+            <input type="file" name="fridge" accept="image/*" required>
+            <button type="submit" class="btn-green">🔄 Generate Meal Plan</button>
+        </form>
+        {% if error %}<p class="error">❌ {{ error }}</p>{% endif %}
+    </div>
+
+    {% if ingredients %}
+    <div class="ingredients-box">
+        <h3>🥦 Detected Ingredients</h3>
+        <p>{{ ingredients }}</p>
+    </div>
+    {% endif %}
+
+    {% if meal %}
+    <div class="today-card">
+        <h2>📅 Today's Menu — Day {{ meal.day }}</h2>
+        <p>🌅 <strong>Breakfast:</strong> {{ meal.breakfast }}</p>
+        <p>☀️ <strong>Lunch:</strong> {{ meal.lunch }}</p>
+        <p>🌙 <strong>Dinner:</strong> {{ meal.dinner }}</p>
+    </div>
+    {% endif %}
+
+    {% if all_meals %}
+    <div class="week-section">
+        <h2>🗓️ Full 7-Day Meal Plan</h2>
+        {% for plan in all_meals %}
+        <div class="day-card">
+            <h3>📌 Day {{ plan.day }}</h3>
+            <div class="meal-row">
+                <div class="meal-item">
+                    <div class="meal-label">🌅 Breakfast</div>
+                    <div class="meal-name">{{ plan.breakfast }}</div>
+                    <button class="btn-recipe" onclick="openRecipe({{ plan.id }}, 'breakfast', '{{ plan.breakfast }}')">View Recipe</button>
+                </div>
+                <div class="meal-item">
+                    <div class="meal-label">☀️ Lunch</div>
+                    <div class="meal-name">{{ plan.lunch }}</div>
+                    <button class="btn-recipe" onclick="openRecipe({{ plan.id }}, 'lunch', '{{ plan.lunch }}')">View Recipe</button>
+                </div>
+                <div class="meal-item">
+                    <div class="meal-label">🌙 Dinner</div>
+                    <div class="meal-name">{{ plan.dinner }}</div>
+                    <button class="btn-recipe" onclick="openRecipe({{ plan.id }}, 'dinner', '{{ plan.dinner }}')">View Recipe</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Chatbot FAB -->
+<a href="/chatbot/" class="chatbot-fab" title="Open Chatbot">💬</a>
+
+<!-- Recipe Modal -->
+<div class="modal-overlay" id="recipeModal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <div id="modalContent"><div class="modal-loading">⏳ Loading recipe...</div></div>
+    </div>
+</div>
+
+<script>
+let currentPlanId = null;
+let currentMealType = null;
+
+function openRecipe(planId, mealType, dishName) {
+    currentPlanId = planId;
+    currentMealType = mealType;
+    document.getElementById("recipeModal").classList.add("active");
+    document.getElementById("modalContent").innerHTML = '<div class="modal-loading">⏳ Generating recipe for <strong>' + dishName + '</strong>...</div>';
+
+    fetch(`/recipe/${planId}/${mealType}/`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById("modalContent").innerHTML = '<p style="color:red">Error: ' + data.error + '</p>';
+                return;
+            }
+            renderRecipe(data);
+        })
+        .catch(e => {
+            document.getElementById("modalContent").innerHTML = '<p style="color:red">Failed to load recipe.</p>';
+        });
+}
+
+function renderRecipe(data) {
+    let ingsHtml = '';
+    data.ingredients.forEach(ing => {
+        ingsHtml += `
+        <div class="ingredient-row">
+            <div class="ing-info">
+                <span class="ing-name">${ing.name}</span>
+                <span class="ing-qty"> — ${ing.quantity}</span>
+            </div>
+            <button class="btn-sub" onclick="substituteIngredient('${ing.name}', this)">
+                Not Available? Substitute
+            </button>
+        </div>`;
+    });
+
+    document.getElementById("modalContent").innerHTML = `
+        <h2>🍽️ ${data.dish}</h2>
+        <h4 style="margin: 16px 0 10px; color:#555;">Ingredients</h4>
+        ${ingsHtml}
+        <button class="btn-change-dish" onclick="changeDish()">
+            🔄 Can't make this? Change entire dish
+        </button>
+        <h4 style="margin: 16px 0 10px; color:#555;">Recipe Steps</h4>
+        <div class="steps-box">${data.steps}</div>
+    `;
+}
+
+function substituteIngredient(ingName, btn) {
+    btn.disabled = true;
+    btn.textContent = "Finding substitute...";
+
+    fetch("/substitute/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken")},
+        body: JSON.stringify({
+            plan_id: currentPlanId,
+            meal_type: currentMealType,
+            action: "substitute",
+            ingredient: ingName
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.parentElement.insertAdjacentHTML("afterend",
+            `<div class="substitute-result">💡 <strong>Substitute for ${ingName}:</strong> ${data.result}</div>`
+        );
+        btn.textContent = "✓ Done";
+    })
+    .catch(() => { btn.textContent = "Error"; });
+}
+
+function changeDish() {
+    const btn = document.querySelector(".btn-change-dish");
+    btn.disabled = true;
+    btn.textContent = "⏳ Finding alternative dish...";
+
+    fetch("/substitute/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken")},
+        body: JSON.stringify({
+            plan_id: currentPlanId,
+            meal_type: currentMealType,
+            action: "change_dish",
+            ingredient: "unavailable ingredients"
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.textContent = "✅ Dish changed to: " + data.result;
+        // Reload recipe for new dish
+        setTimeout(() => {
+            closeModal();
+            location.reload();
+        }, 2000);
+    })
+    .catch(() => { btn.textContent = "Error"; });
+}
+
+function closeModal() {
+    document.getElementById("recipeModal").classList.remove("active");
+    currentPlanId = null;
+    currentMealType = null;
+}
+
+// Close modal on overlay click
+document.getElementById("recipeModal").addEventListener("click", function(e) {
+    if (e.target === this) closeModal();
+});
+
+function getCookie(name) {
+    let val = document.cookie.split("; ").find(r => r.startsWith(name + "="));
+    return val ? val.split("=")[1] : "";
+}
+</script>
+
+</body>
+</html>

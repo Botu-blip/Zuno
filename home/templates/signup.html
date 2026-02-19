@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Sign Up – Zuno</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: #2e7d32;
+            color: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .top-bar h1 { font-size: 22px; }
+        .top-bar a {
+            background: white;
+            color: #2e7d32;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .top-bar a:hover { background: #e8f5e9; }
+
+        .main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .signup-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            padding: 40px 36px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .card-header .icon { font-size: 48px; display: block; margin-bottom: 10px; }
+        .card-header h2  { color: #2e7d32; font-size: 24px; margin-bottom: 6px; }
+        .card-header p   { color: #888; font-size: 14px; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 7px;
+            font-size: 14px;
+        }
+        .input-wrapper { position: relative; }
+        .input-icon {
+            position: absolute;
+            left: 13px; top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            pointer-events: none;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 11px 14px 11px 40px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #333;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76,175,80,0.15);
+        }
+        .form-group input::placeholder { color: #bbb; }
+
+        .toggle-pw {
+            position: absolute;
+            right: 13px; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            cursor: pointer; font-size: 16px;
+            color: #aaa; padding: 0;
+        }
+        .toggle-pw:hover { color: #4CAF50; }
+
+        .btn-signup {
+            width: 100%;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 13px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btn-signup:hover  { background: #388e3c; }
+        .btn-signup:active { transform: scale(0.98); }
+
+        .alert {
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-size: 14px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .alert-error   { background: #fdecea; color: #c62828; border-left: 4px solid #e53935; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4CAF50; }
+
+        .login-link { text-align: center; margin-top: 22px; font-size: 14px; color: #666; }
+        .login-link a { color: #4CAF50; font-weight: bold; text-decoration: none; }
+        .login-link a:hover { text-decoration: underline; }
+
+        footer { text-align: center; padding: 16px; font-size: 12px; color: #aaa; }
+
+        @media (max-width: 480px) {
+            .signup-card { padding: 28px 18px; }
+            .top-bar h1  { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h1>🍳 Zuno</h1>
+    <a href="/login/">🔑 Login</a>
+</div>
+
+<div class="main">
+    <div class="signup-card">
+
+        <div class="card-header">
+            <span class="icon">🌱</span>
+            <h2>Create Account</h2>
+            <p>Join Zuno — plan your meals & outfits!</p>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-error">❌ {{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="/register/">
+            {% csrf_token %}
+
+            <!-- Username -->
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">👤</span>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="Choose a username"
+                        required
+                        autocomplete="username"
+                        value="{{ request.POST.username|default:'' }}"
+                    >
+                </div>
+            </div>
+
+            <!-- Email (optional) -->
+            <div class="form-group">
+                <label for="email">Email <span style="color:#bbb; font-weight:normal">(optional)</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon">📧</span>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        value="{{ request.POST.email|default:'' }}"
+                    >
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password1">Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input
+                        type="password"
+                        id="password1"
+                        name="password1"
+                        placeholder="Create a password"
+                        required
+                        autocomplete="new-password"
+                    >
+                    <button type="button" class="toggle-pw" onclick="togglePassword('password1', this)">👁️</button>
+                </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group">
+                <label for="password2">Confirm Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input
+                        type="password"
+                        id="password2"
+                        name="password2"
+                        placeholder="Repeat your password"
+                        required
+                        autocomplete="new-password"
+                    >
+                    <button type="button" class="toggle-pw" onclick="togglePassword('password2', this)">👁️</button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-signup">🌱 Create Account</button>
+        </form>
+
+        <div class="login-link">
+            Already have an account? <a href="/login/">Sign in →</a>
+        </div>
+    </div>
+</div>
+
+<footer>© 2026 ZUNO · All rights reserved</footer>
+
+<script>
+    function togglePassword(fieldId, btn) {
+        const input = document.getElementById(fieldId);
+        if (input.type === "password") {
+            input.type = "text";
+            btn.textContent = "🙈";
+        } else {
+            input.type = "password";
+            btn.textContent = "👁️";
+        }
+    }
+
+    document.querySelectorAll(".alert-error").forEach(el => {
+        setTimeout(() => {
+            el.style.transition = "opacity 0.5s";
+            el.style.opacity = "0";
+            setTimeout(() => el.remove(), 500);
+        }, 5000);
+    });
+</script>
+
+</body>
+</html>
